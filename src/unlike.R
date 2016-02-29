@@ -1,8 +1,8 @@
 ################################################################################
-predictor.team <- function(y) {
+predictor.unlike <- function(y) {
 ################################################################################
-  f <- jitter(y[nrow(y), 1])
+  pred <- jitter(y[nrow(y), 1])
   
-  return(f)
+  return(pred)
 }
 # END OF SCRIPT
