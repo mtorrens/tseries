@@ -2,6 +2,9 @@
 # Define your working directory
 PATH <- '/Users/miquel/Desktop/bgse/projects/github/tseries/'
 
+# Package dependencies
+library(tseries)
+
 # Other directories
 INPDIR <- paste(PATH, 'input/', sep = '')
 DATDIR <- paste(PATH, 'data/', sep = '')
@@ -21,5 +24,17 @@ if (! file.exists(file)) {
 } else {
   series <- get(load(file = file)); cat('Loaded file:', file, '\n')
 }
+
+# Target variable
+target <- series[, 'TARGET']
 ################################################################################
 
+################################################################################
+# Exploratory analysis
+plot(target, type = 'l')
+################################################################################
+
+################################################################################
+# Some models
+NULL
+################################################################################
