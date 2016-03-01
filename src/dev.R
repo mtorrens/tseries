@@ -2,6 +2,7 @@
 # Define your working directory
 PATH <- '/Users/miquel/Desktop/bgse/projects/github/tseries/'
 
+
 # Package dependencies
 library(tseries)
 
@@ -36,5 +37,31 @@ plot(target, type = 'l')
 
 ################################################################################
 # Some models
-NULL
 ################################################################################
+
+# ARIMA (10,0,2)
+
+library(foreach)
+library(doMC)
+
+registerDoMC(cores=4)
+
+time1 <- system.time( {
+  
+  MSE_arima <- foreach(i=1:150) %dopar% {
+    
+    train <- data[i:(nrow(data_train)+i-1),]
+    test <-  data[nrow(data_train)+i,]
+    
+    model_arima <- arima(train[,1], order = c(10,0,2), xreg = train[,-1])
+    predict_arima <- predict(model_arima, newdata = test$TARGET, newxreg=test[,-1])
+    return(mean((predict_arima$pred - test$TARGET)^2))
+    
+  }
+  
+})
+
+score <- mean(unlist(MSE_arima))
+
+
+
