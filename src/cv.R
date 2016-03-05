@@ -30,7 +30,7 @@ validate <- function(series, p2p) {
 # p2p       (numeric): number of points to predict
 ################################################################################
   # Set up lesioned dataset
-  #series <- as.matrix(series)
+  series <- as.matrix(series)
   to.predict <- (nrow(series) - p2p + 1):nrow(series)
   truth <- series[to.predict, 'TARGET']
   series[to.predict, 'TARGET'] <- NA
