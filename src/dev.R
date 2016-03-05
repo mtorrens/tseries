@@ -2,7 +2,6 @@
 # Define your working directory
 PATH <- '/Users/miquel/Desktop/bgse/projects/github/tseries/'
 
-
 # Package dependencies
 library(tseries)
 
