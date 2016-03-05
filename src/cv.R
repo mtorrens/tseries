@@ -39,7 +39,8 @@ validate <- function(series, p2p) {
   repeat {
     empty <- which(is.na(series[, 'TARGET']))
     filled <- which(! is.na(series[, 'TARGET']))
-    result <- predictor.unlike(y = series[filled, ])
+    to.model <- c(filled, empty[1])
+    result <- predictor.unlike(y = series[to.model, ])
     series[empty[1], 'TARGET'] <- result
     if (length(empty) == 1) {
       break
@@ -49,7 +50,6 @@ validate <- function(series, p2p) {
   # Calculate mean squared error (?)
   preds <- series[to.predict, 'TARGET']
   mse <- mean((truth - preds) ** 2)
-  #print(mse)
   return(mse)
 }
 
