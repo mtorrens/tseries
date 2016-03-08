@@ -32,34 +32,33 @@ y <- scale(target)
 x <- scale(series[, -1])
 prior <- zellnerprior(tau = nrow(x))
 
-
+# Run models
 ms.unif <- modelSelection(y = y, x = x, priorCoef = prior,
                           priorDelta = modelunifprior(), niter = 10 ** 5)
 ms.bbin <- modelSelection(y = y, x = x, priorCoef = prior,
                           priorDelta = modelbbprior(), niter = 10 ** 5)
 
+# See the results
 pp.unif <- postProb(ms.unif)
 nvars <- sapply(strsplit(as.character(pp.unif[, 1]), split = ','), length)
 pp.unif <- tapply(pp.unif$pp, nvars, sum)
 
 pp.bbin <- postProb(ms.bbin)
-nvars <- sapply(strsplit(as.character(pp.bbin[, 1]), split=','),length)
-pp.bbin <- tapply(pp.bbin$pp,nvars,sum)
+nvars <- sapply(strsplit(as.character(pp.bbin[, 1]), split = ','),length)
+pp.bbin <- tapply(pp.bbin$pp, nvars, sum)
 
-#Plot posterior distribution of model size
-plot(names(pp.bbin), pp.bbin, type='l', xlab='Number of variables', ylab='Posterior probability', cex.lab=1.5, ylim=c(0,0.3))
-lines(names(pp.unif), pp.unif, col=2)
-legend('topright',c('Beta-Binomial(1,1)','Uniform'),lty=1,col=1:2,cex=1.5)
+# Plot posterior distribution of model size
+plot(names(pp.bbin), pp.bbin, type = 'l', xlab = 'Number of variables',
+     ylab = 'Posterior probability', cex.lab = 1.5, ylim = c(0, 0.3))
+lines(names(pp.unif), pp.unif, col = 2)
+legend('topright', c('Beta-Binomial(1,1)', 'Uniform'),
+       lty = 1, col = 1:2, cex = 1.5)
 
-#List top 5 models under Uniform & Beta-Binomial prior
+# List top 5 models under Uniform & Beta-Binomial prior
 postProb(ms.unif)[1:5, ]
 postProb(ms.bbin)[1:5, ]
 
-
-
-
-
-
+# MORE SERIOUS STUFF
 # Least Squares Estimator
 fit.mle <- looCV.mle(y = y, x = x)
 
