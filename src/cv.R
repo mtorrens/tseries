@@ -26,62 +26,6 @@ source(paste(SRCDIR, 'unlike.R', sep = ''))
 ################################################################################
 
 ################################################################################
-# Variable selection
-library(mombf)
-y <- scale(target)
-x <- scale(series[, -1])
-prior <- zellnerprior(tau = nrow(x))
-
-# Run models
-ms.unif <- modelSelection(y = y, x = x, priorCoef = prior,
-                          priorDelta = modelunifprior(), niter = 10 ** 5)
-ms.bbin <- modelSelection(y = y, x = x, priorCoef = prior,
-                          priorDelta = modelbbprior(), niter = 10 ** 5)
-
-# See the results
-pp.unif <- postProb(ms.unif)
-nvars <- sapply(strsplit(as.character(pp.unif[, 1]), split = ','), length)
-pp.unif <- tapply(pp.unif$pp, nvars, sum)
-
-pp.bbin <- postProb(ms.bbin)
-nvars <- sapply(strsplit(as.character(pp.bbin[, 1]), split = ','),length)
-pp.bbin <- tapply(pp.bbin$pp, nvars, sum)
-
-# Plot posterior distribution of model size
-plot(names(pp.bbin), pp.bbin, type = 'l', xlab = 'Number of variables',
-     ylab = 'Posterior probability', cex.lab = 1.5, ylim = c(0, 0.3))
-lines(names(pp.unif), pp.unif, col = 2)
-legend('topright', c('Beta-Binomial(1,1)', 'Uniform'),
-       lty = 1, col = 1:2, cex = 1.5)
-
-# List top 5 models under Uniform & Beta-Binomial prior
-postProb(ms.unif)[1:5, ]
-postProb(ms.bbin)[1:5, ]
-
-# MORE SERIOUS STUFF
-# Least Squares Estimator
-fit.mle <- looCV.mle(y = y, x = x)
-
-# Bayesian Model Averaging
-fit.bma <- looCV.bma(y = y, x = x, type = 'bma', priorCoef = prior,
-                     priorDelta = modelbbprior(alpha.p = 1, beta.p = 1),
-                     niter = 10 ** 4)
-
-# Median Probability Model
-fit.med <- looCV.bma(y = y, x = x, type = 'median', priorCoef = prior,
-                     priorDelta = modelbbprior(alpha.p = 1, beta.p = 1),
-                     niter = 10 ** 4)
-
-# Compare predictions for different methods
-plot(fit.bma$pred, fit.med$pred, xlab = 'Bayesian model averaging',
-     ylab = 'Median probability model')
-abline(0, 1)
-plot(fit.bma$pred, fit.mle$pred, xlab = 'Bayesian model averaging',
-     ylab = 'Least squares')
-abline(0, 1)
-
-
-################################################################################
 validate <- function(series, p2p) {
 # series (data.frame): data with first column being the feature to predict
 # p2p       (numeric): number of points to predict
@@ -111,7 +55,7 @@ validate <- function(series, p2p) {
 }
 
 ################################################################################
-validate <- function(series, p2p) {
+validate <- function(series, p2p, ...) {
 # series (data.frame): data with first column being the feature to predict
 # p2p       (numeric): number of points to predict
 ################################################################################
@@ -119,18 +63,39 @@ validate <- function(series, p2p) {
   series <- as.matrix(series)
   to.predict <- (nrow(series) - p2p + 1):nrow(series)
   
+  # Apply the function for each new point
   preds <- sapply(to.predict, function(x) {
-    #print(dim(series[1:(x - 1), ])); stop()
-    predictor.unlike(y = series[1:(x - 1), ])
+    predictor.unlike(y = series[1:(x - 1), ], ...)
   })
 
+  # Compute Mean Squared Error
   truth <- series[to.predict, 'TARGET']
   mse <- mean((truth - preds) ** 2)
   return(mse)
 }
 
+#source(paste(SRCDIR, 'unlike.R', sep = ''))
 ################################################################################
 # Cross validation
+# Try the best parameters of Random Forest
+res <- list()
+for (n in seq(100, 3000, 50)) {
+  for (s in seq(5, 100, 5)) {
+    mse <- validate(series, p2p = 10, ntree = n, nodesize = s)
+    res[[length(res) + 1]] <- c(n, s, mse)
+    cat('n:', n, 's:', s, 'acc:', round(mse, 4), '\n')
+  }
+}
+
+results <- cbind.data.frame(as.numeric(sapply(res, `[`, 1)),
+                            as.numeric(sapply(res, `[`, 2)),
+                            as.numeric(sapply(res, `[`, 3)))
+colnames(results) <- c('ntrees', 'nodesize', 'mse10')
+
+# mse10 <- validate(series, p2p = 10, ntree = 100, nodesize = 10)
+# mse10 <- validate(series, p2p = 10, ntree = 600, nodesize = 25)
+
+mse10 <- validate(series, p2p = 10)  # This is not cross validation
 mse50 <- validate(series, p2p = 50)  # This is not cross validation
 
 
