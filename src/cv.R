@@ -104,7 +104,8 @@ for (s in seq(50, 300, 10)) {
 
 best <- result[order(result[, 3]), ][1:10, ]
 
-
+# Winner so far
+mse <- validate(series, p2p = 100, ntree = 600, nodesize = 15)
 
 
 # mse10 <- validate(series, p2p = 10, ntree = 100, nodesize = 10)
