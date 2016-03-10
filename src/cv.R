@@ -10,6 +10,7 @@ setwd(PATH)
 INPDIR <- paste(PATH, 'input/', sep = '')
 DATDIR <- paste(PATH, 'data/', sep = '')
 SRCDIR <- paste(PATH, 'src/', sep = '')
+TMPDIR <- paste(PATH, 'temp/', sep = '')
 ################################################################################
 
 ################################################################################
@@ -78,19 +79,33 @@ validate <- function(series, p2p, ...) {
 ################################################################################
 # Cross validation
 # Try the best parameters of Random Forest
-res <- list()
-for (n in seq(100, 3000, 50)) {
-  for (s in seq(5, 100, 5)) {
-    mse <- validate(series, p2p = 10, ntree = n, nodesize = s)
-    res[[length(res) + 1]] <- c(n, s, mse)
+require(doMC)
+require(parallel)
+result <- matrix(nrow = 0, ncol = 3)
+colnames(result) <- c('ntrees', 'nodesize', 'mse10')
+registerDoMC(cores = 4)                                                        
+#for (n in seq(100, 3000, 50)) {
+  #for (s in seq(5, 100, 5)) {
+for (s in seq(50, 300, 10)) {
+  new.res <- foreach(n = seq(5, 200, 5)) %dopar% {
+    mse <- validate(series, p2p = 100, ntree = n, nodesize = s)
     cat('n:', n, 's:', s, 'acc:', round(mse, 4), '\n')
+    return(c(n, s, mse))
   }
+
+  # Compile results
+  res <- cbind(as.numeric(sapply(new.res, `[`, 1)),
+               as.numeric(sapply(new.res, `[`, 2)),
+               as.numeric(sapply(new.res, `[`, 3)))
+  colnames(res) <- colnames(result)
+  result <- as.data.frame(rbind(result, res))
 }
 
-results <- cbind.data.frame(as.numeric(sapply(res, `[`, 1)),
-                            as.numeric(sapply(res, `[`, 2)),
-                            as.numeric(sapply(res, `[`, 3)))
-colnames(results) <- c('ntrees', 'nodesize', 'mse10')
+
+best <- result[order(result[, 3]), ][1:10, ]
+
+
+
 
 # mse10 <- validate(series, p2p = 10, ntree = 100, nodesize = 10)
 # mse10 <- validate(series, p2p = 10, ntree = 600, nodesize = 25)
